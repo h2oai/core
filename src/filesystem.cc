@@ -426,13 +426,20 @@ LocalFileSystem::MakeTemporaryDirectory(std::string* temp_dir)
         "Failed to create local temp folder: " + *temp_dir);
   }
 #else
-  std::string folder_template = "/tmp/folderXXXXXX";
+  const char* env_p = std::getenv("CORE_ENV_TMPDIR");
+  std::string folder_template;
+  if (env_p) {
+    folder_template = env_p;
+  } else {
+    folder_template = "/tmp/folderXXXXXX";
+  }
+
   char* res = mkdtemp(const_cast<char*>(folder_template.c_str()));
   if (res == nullptr) {
     return Status(
         Status::Code::INTERNAL,
-        "Failed to create local temp folder: " + folder_template +
-            ", errno:" + strerror(errno));
+        std::string("Failed to create local temp folder: ") + std::string(folder_template) +
+            std::string(", errno:") + strerror(errno));
   }
   *temp_dir = res;
 #endif
@@ -1277,7 +1284,14 @@ ASFileSystem::LocalizePath(
         "AS file localization not yet implemented " + path);
   }
 
-  std::string folder_template = "/tmp/folderXXXXXX";
+  const char* env_p = std::getenv("CORE_ENV_TMPDIR");
+  std::string folder_template;
+  if (env_p) {
+    folder_template = env_p;
+  } else {
+    folder_template = "/tmp/folderXXXXXX";
+  }
+
   char* tmp_folder = mkdtemp(const_cast<char*>(folder_template.c_str()));
   if (tmp_folder == nullptr) {
     return Status(
